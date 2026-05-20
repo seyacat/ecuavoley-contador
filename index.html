@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#111827">
+<title>Marcador Ecuavóley</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    background: #111827;
+  }
+
+  /* --- Marcador --- */
+  .marcador {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+  .equipo {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    transition: background-color .2s;
+    cursor: pointer;
+    position: relative;
+  }
+  .equipo.izq { background: #1d4ed8; }
+  .equipo.der { background: #b91c1c; }
+
+  /* equipo sin cambio: atenuado y no marca */
+  .equipo:not(.activo) {
+    filter: brightness(.45) saturate(.6);
+  }
+  .equipo:not(.activo) .puntos { opacity: .8; }
+
+  .nombre {
+    font-size: 5vw;
+    font-weight: 700;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: 1vh;
+    background: transparent;
+    border: none;
+    color: #fff;
+    text-align: center;
+    width: 90%;
+  }
+  .puntos {
+    font-size: 30vw;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+  .flechas {
+    display: flex;
+    gap: 4vw;
+    margin-top: 1vh;
+  }
+  .flechas button {
+    width: 13vw;
+    height: 13vw;
+    border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.6);
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-size: 6vw;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+  }
+  .flechas button:active { background: rgba(255,255,255,.35); }
+  .saque {
+    margin-top: 1.5vh;
+    height: 3.2vh;
+    font-size: 2.6vh;
+    font-weight: 700;
+    letter-spacing: .12em;
+  }
+  .equipo.activo .saque::after { content: "● SAQUE"; }
+
+  .toque {
+    position: absolute;
+    font-size: 12vh;
+    font-weight: 800;
+    opacity: 0;
+    pointer-events: none;
+  }
+  @keyframes pop {
+    0%   { opacity: .9; transform: scale(.4); }
+    100% { opacity: 0;  transform: scale(1.6); }
+  }
+  .toque.anim { animation: pop .5s ease-out; }
+
+  /* --- Barra de control --- */
+  .control {
+    display: flex;
+    background: #111827;
+    border-top: 2px solid #1f2937;
+  }
+  .control button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 1.9vh;
+    font-weight: 700;
+    padding: 1.6vh 0;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    cursor: pointer;
+  }
+  .control button:active { background: #1f2937; }
+  .btn-cambio {
+    background: #f59e0b !important;
+    color: #111827 !important;
+    font-size: 2.4vh !important;
+  }
+  .btn-cambio:active { background: #d97706 !important; }
+
+  .ganador {
+    position: absolute;
+    top: 1.2vh;
+    font-size: 2.4vh;
+    font-weight: 800;
+    color: #fde047;
+  }
+</style>
+</head>
+<body>
+
+  <div class="marcador">
+    <div class="equipo izq activo" id="eqIzq">
+      <input class="nombre" id="nomIzq" value="Equipo A" maxlength="14">
+      <div class="puntos" id="ptsIzq">0</div>
+      <div class="flechas">
+        <button data-lado="izq" data-delta="-1">−</button>
+        <button data-lado="izq" data-delta="1">+</button>
+      </div>
+      <div class="saque"></div>
+      <div class="ganador" id="ganaIzq"></div>
+      <div class="toque" id="toqueIzq">+1</div>
+    </div>
+    <div class="equipo der" id="eqDer">
+      <input class="nombre" id="nomDer" value="Equipo B" maxlength="14">
+      <div class="puntos" id="ptsDer">0</div>
+      <div class="flechas">
+        <button data-lado="der" data-delta="-1">−</button>
+        <button data-lado="der" data-delta="1">+</button>
+      </div>
+      <div class="saque"></div>
+      <div class="ganador" id="ganaDer"></div>
+      <div class="toque" id="toqueDer">+1</div>
+    </div>
+  </div>
+
+  <div class="control">
+    <button id="btnDeshacer">↶ Deshacer</button>
+    <button class="btn-cambio" id="btnCambio">⇄ Cambio</button>
+    <button id="btnReiniciar">↺ Reiniciar</button>
+  </div>
+
+<script>
+  // Ecuavóley: gana el primero en llegar a 15 puntos.
+  const META = 15;
+
+  const estado = {
+    izq: 0,
+    der: 0,
+    cambio: 'izq',   // equipo que tiene el saque
+    historial: []    // para deshacer
+  };
+
+  const $ = id => document.getElementById(id);
+
+  function hayGanador() {
+    if (estado.izq >= META) return 'izq';
+    if (estado.der >= META) return 'der';
+    return null;
+  }
+
+  function render() {
+    $('ptsIzq').textContent = estado.izq;
+    $('ptsDer').textContent = estado.der;
+
+    const g = hayGanador();
+    $('eqIzq').classList.toggle('activo', !g && estado.cambio === 'izq');
+    $('eqDer').classList.toggle('activo', !g && estado.cambio === 'der');
+
+    $('ganaIzq').textContent = g === 'izq' ? '🏆 GANADOR' : '';
+    $('ganaDer').textContent = g === 'der' ? '🏆 GANADOR' : '';
+  }
+
+  function guardar() {
+    estado.historial.push({ izq: estado.izq, der: estado.der, cambio: estado.cambio });
+  }
+
+  function sumar(lado) {
+    if (hayGanador()) return;          // partido terminado
+    if (estado.cambio !== lado) return; // solo marca quien tiene el saque
+    guardar();
+    estado[lado]++;
+    animarToque(lado);
+    render();
+  }
+
+  function animarToque(lado) {
+    const el = lado === 'izq' ? $('toqueIzq') : $('toqueDer');
+    el.classList.remove('anim');
+    void el.offsetWidth; // reinicia la animación
+    el.classList.add('anim');
+  }
+
+  // Ajuste manual del puntaje, independiente del saque y del estado del partido.
+  function ajustar(lado, delta) {
+    const nuevo = estado[lado] + delta;
+    if (nuevo < 0) return;
+    guardar();
+    estado[lado] = nuevo;
+    render();
+  }
+
+  function cambio() {
+    if (hayGanador()) return;
+    guardar();
+    estado.cambio = estado.cambio === 'izq' ? 'der' : 'izq';
+    render();
+  }
+
+  function deshacer() {
+    const prev = estado.historial.pop();
+    if (!prev) return;
+    estado.izq = prev.izq;
+    estado.der = prev.der;
+    estado.cambio = prev.cambio;
+    render();
+  }
+
+  function reiniciar() {
+    if (!confirm('¿Reiniciar el marcador?')) return;
+    estado.izq = 0;
+    estado.der = 0;
+    estado.cambio = 'izq';
+    estado.historial = [];
+    render();
+  }
+
+  // Eventos: tocar el panel suma punto, salvo el nombre o las flechas.
+  function tocarPanel(lado) {
+    return e => {
+      if (e.target.classList.contains('nombre')) return;
+      if (e.target.closest('.flechas')) return;
+      sumar(lado);
+    };
+  }
+  $('eqIzq').addEventListener('click', tocarPanel('izq'));
+  $('eqDer').addEventListener('click', tocarPanel('der'));
+
+  // Flechas + / − : ajustan el puntaje de su equipo de forma independiente.
+  document.querySelectorAll('.flechas button').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      ajustar(b.dataset.lado, Number(b.dataset.delta));
+    });
+  });
+
+  $('btnCambio').addEventListener('click', cambio);
+  $('btnDeshacer').addEventListener('click', deshacer);
+  $('btnReiniciar').addEventListener('click', reiniciar);
+
+  render();
+</script>
+</body>
+</html>
