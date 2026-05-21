@@ -5,6 +5,11 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="theme-color" content="#111827">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-title" content="Ecuavóley">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <title>Marcador Ecuavóley</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -292,6 +297,7 @@
 
   <div class="topbar">
     <button id="btnResultados">📋 Resultados</button>
+    <button id="btnInstalar" style="display:none">⬇ Instalar</button>
   </div>
 
   <div class="marcador">
@@ -585,6 +591,38 @@
 
   cargarActual();
   render();
+
+  // --- PWA: service worker + botón Instalar ---
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
+
+  let deferredPrompt = null;
+  const btnInstalar = $('btnInstalar');
+  const yaInstalada = () =>
+    window.matchMedia('(display-mode: standalone)').matches ||
+    window.navigator.standalone === true;
+
+  if (!yaInstalada()) {
+    window.addEventListener('beforeinstallprompt', e => {
+      e.preventDefault();
+      deferredPrompt = e;
+      btnInstalar.style.display = '';
+    });
+  }
+  btnInstalar.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    btnInstalar.style.display = 'none';
+  });
+  window.addEventListener('appinstalled', () => {
+    btnInstalar.style.display = 'none';
+    deferredPrompt = null;
+  });
 </script>
 </body>
 </html>
