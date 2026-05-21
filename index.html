@@ -21,6 +21,26 @@
     background: #111827;
   }
 
+  /* --- Barra superior --- */
+  .topbar {
+    display: flex;
+    background: #111827;
+    border-bottom: 2px solid #1f2937;
+  }
+  .topbar button {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: #9ca3af;
+    font-size: 1.9vh;
+    font-weight: 700;
+    padding: 1.4vh 0;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    cursor: pointer;
+  }
+  .topbar button:active { background: #1f2937; }
+
   /* --- Marcador --- */
   .marcador {
     flex: 1;
@@ -28,7 +48,8 @@
     min-height: 0;
   }
   .equipo {
-    flex: 1;
+    flex: 1 1 0;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -37,6 +58,7 @@
     transition: background-color .2s;
     cursor: pointer;
     position: relative;
+    overflow: hidden;
   }
   .equipo.izq { background: #1d4ed8; }
   .equipo.der { background: #b91c1c; }
@@ -47,18 +69,52 @@
   }
   .equipo:not(.activo) .puntos { opacity: .8; }
 
-  .nombre {
-    font-size: 5vw;
-    font-weight: 700;
-    letter-spacing: .05em;
-    text-transform: uppercase;
+  .nombre-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5vw;
+    width: 100%;
+    padding: 0 2vw;
     margin-bottom: 1vh;
+  }
+  .nombre {
+    font-size: 4.2vw;
+    font-weight: 700;
+    letter-spacing: .03em;
+    text-transform: uppercase;
     background: transparent;
     border: none;
+    border-bottom: 1px dashed transparent;
     color: #fff;
     text-align: center;
-    width: 90%;
+    flex: 1 1 0;
+    min-width: 0;
+    width: 100%;
   }
+  .nombre:focus {
+    outline: none;
+    border-bottom-color: rgba(255,255,255,.6);
+  }
+  .edit-nombre {
+    width: 7vw;
+    height: 7vw;
+    max-width: 32px;
+    max-height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,.5);
+    background: rgba(255,255,255,.12);
+    color: #fff;
+    font-size: 3.5vw;
+    line-height: 1;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .edit-nombre:active { background: rgba(255,255,255,.3); }
   .puntos {
     font-size: 30vw;
     font-weight: 800;
@@ -138,13 +194,112 @@
     font-weight: 800;
     color: #fde047;
   }
+
+  /* --- Modal de resultados --- */
+  .modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.75);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    padding: 4vh 4vw;
+  }
+  .modal.abierto { display: flex; }
+  .modal-caja {
+    background: #1f2937;
+    color: #fff;
+    border-radius: 12px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2vh 4vw;
+    border-bottom: 1px solid #374151;
+  }
+  .modal-head h2 {
+    font-size: 2.4vh;
+    font-weight: 800;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+  .modal-cerrar {
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 3vh;
+    cursor: pointer;
+    padding: 0 1vw;
+  }
+  .modal-body {
+    overflow-y: auto;
+    padding: 1vh 0;
+  }
+  .resultado {
+    display: flex;
+    align-items: center;
+    gap: 2vw;
+    padding: 1.5vh 4vw;
+    border-bottom: 1px solid #374151;
+  }
+  .resultado:last-child { border-bottom: none; }
+  .resultado-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .resultado-fecha {
+    font-size: 1.5vh;
+    color: #9ca3af;
+    margin-bottom: .4vh;
+  }
+  .resultado-marcador {
+    font-size: 2.1vh;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .resultado-marcador .gana { color: #fde047; }
+  .borrar {
+    background: #b91c1c;
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 1vh 3vw;
+    font-size: 1.8vh;
+    font-weight: 700;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .borrar:active { background: #7f1d1d; }
+  .vacio {
+    padding: 4vh 4vw;
+    text-align: center;
+    color: #9ca3af;
+    font-size: 2vh;
+  }
 </style>
 </head>
 <body>
 
+  <div class="topbar">
+    <button id="btnResultados">📋 Resultados</button>
+  </div>
+
   <div class="marcador">
     <div class="equipo izq activo" id="eqIzq">
-      <input class="nombre" id="nomIzq" value="Equipo A" maxlength="14">
+      <div class="nombre-wrap">
+        <input class="nombre" id="nomIzq" value="Equipo A" maxlength="14" readonly>
+        <button class="edit-nombre" data-target="nomIzq" title="Editar nombre">✎</button>
+      </div>
       <div class="puntos" id="ptsIzq">0</div>
       <div class="flechas">
         <button data-lado="izq" data-delta="-1">−</button>
@@ -155,7 +310,10 @@
       <div class="toque" id="toqueIzq">+1</div>
     </div>
     <div class="equipo der" id="eqDer">
-      <input class="nombre" id="nomDer" value="Equipo B" maxlength="14">
+      <div class="nombre-wrap">
+        <input class="nombre" id="nomDer" value="Equipo B" maxlength="14" readonly>
+        <button class="edit-nombre" data-target="nomDer" title="Editar nombre">✎</button>
+      </div>
       <div class="puntos" id="ptsDer">0</div>
       <div class="flechas">
         <button data-lado="der" data-delta="-1">−</button>
@@ -170,12 +328,24 @@
   <div class="control">
     <button id="btnDeshacer">↶ Deshacer</button>
     <button class="btn-cambio" id="btnCambio">⇄ Cambio</button>
-    <button id="btnReiniciar">↺ Reiniciar</button>
+    <button id="btnNuevo">+ Nuevo</button>
+  </div>
+
+  <div class="modal" id="modalResultados">
+    <div class="modal-caja">
+      <div class="modal-head">
+        <h2>Resultados</h2>
+        <button class="modal-cerrar" id="btnCerrarModal">✕</button>
+      </div>
+      <div class="modal-body" id="listaResultados"></div>
+    </div>
   </div>
 
 <script>
   // Ecuavóley: gana el primero en llegar a 15 puntos.
   const META = 15;
+  const STORAGE_KEY = 'voley_resultados';
+  const ACTUAL_KEY = 'voley_actual';
 
   const estado = {
     izq: 0,
@@ -183,6 +353,29 @@
     cambio: 'izq',   // equipo que tiene el saque
     historial: []    // para deshacer
   };
+
+  function guardarActual() {
+    localStorage.setItem(ACTUAL_KEY, JSON.stringify({
+      izq: estado.izq,
+      der: estado.der,
+      cambio: estado.cambio,
+      historial: estado.historial,
+      nomIzq: $('nomIzq') ? $('nomIzq').value : 'Equipo A',
+      nomDer: $('nomDer') ? $('nomDer').value : 'Equipo B'
+    }));
+  }
+  function cargarActual() {
+    try {
+      const d = JSON.parse(localStorage.getItem(ACTUAL_KEY));
+      if (!d) return;
+      estado.izq = d.izq || 0;
+      estado.der = d.der || 0;
+      estado.cambio = d.cambio || 'izq';
+      estado.historial = Array.isArray(d.historial) ? d.historial : [];
+      if (d.nomIzq) $('nomIzq').value = d.nomIzq;
+      if (d.nomDer) $('nomDer').value = d.nomDer;
+    } catch {}
+  }
 
   const $ = id => document.getElementById(id);
 
@@ -195,13 +388,9 @@
   function render() {
     $('ptsIzq').textContent = estado.izq;
     $('ptsDer').textContent = estado.der;
-
-    const g = hayGanador();
-    $('eqIzq').classList.toggle('activo', !g && estado.cambio === 'izq');
-    $('eqDer').classList.toggle('activo', !g && estado.cambio === 'der');
-
-    $('ganaIzq').textContent = g === 'izq' ? '🏆 GANADOR' : '';
-    $('ganaDer').textContent = g === 'der' ? '🏆 GANADOR' : '';
+    $('eqIzq').classList.toggle('activo', estado.cambio === 'izq');
+    $('eqDer').classList.toggle('activo', estado.cambio === 'der');
+    guardarActual();
   }
 
   function guardar() {
@@ -209,8 +398,10 @@
   }
 
   function sumar(lado) {
-    if (hayGanador()) return;          // partido terminado
-    if (estado.cambio !== lado) return; // solo marca quien tiene el saque
+    if (estado.cambio !== lado) {       // tocar el lado sin saque = cambio
+      cambio();
+      return;
+    }
     guardar();
     estado[lado]++;
     animarToque(lado);
@@ -234,7 +425,6 @@
   }
 
   function cambio() {
-    if (hayGanador()) return;
     guardar();
     estado.cambio = estado.cambio === 'izq' ? 'der' : 'izq';
     render();
@@ -249,8 +439,30 @@
     render();
   }
 
-  function reiniciar() {
-    if (!confirm('¿Reiniciar el marcador?')) return;
+  // --- Resultados guardados ---
+  function leerResultados() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch { return []; }
+  }
+  function escribirResultados(arr) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+  }
+
+  function nuevoPartido() {
+    const hayPuntos = estado.izq > 0 || estado.der > 0;
+    if (hayPuntos) {
+      if (!confirm('¿Iniciar un nuevo partido? Se guardará el marcador actual.')) return;
+      const resultados = leerResultados();
+      resultados.unshift({
+        fecha: Date.now(),
+        nomIzq: $('nomIzq').value || 'Equipo A',
+        nomDer: $('nomDer').value || 'Equipo B',
+        izq: estado.izq,
+        der: estado.der
+      });
+      escribirResultados(resultados);
+    }
     estado.izq = 0;
     estado.der = 0;
     estado.cambio = 'izq';
@@ -258,16 +470,101 @@
     render();
   }
 
+  function formatearFecha(ts) {
+    const d = new Date(ts);
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mi = String(d.getMinutes()).padStart(2, '0');
+    return `${dd}/${mm} ${hh}:${mi}`;
+  }
+
+  function pintarResultados() {
+    const cont = $('listaResultados');
+    const resultados = leerResultados();
+    if (resultados.length === 0) {
+      cont.innerHTML = '<div class="vacio">No hay resultados guardados.</div>';
+      return;
+    }
+    cont.innerHTML = '';
+    resultados.forEach((r, i) => {
+      const izqGana = r.izq > r.der;
+      const derGana = r.der > r.izq;
+      const fila = document.createElement('div');
+      fila.className = 'resultado';
+      fila.innerHTML = `
+        <div class="resultado-info">
+          <div class="resultado-fecha">${formatearFecha(r.fecha)}</div>
+          <div class="resultado-marcador">
+            <span class="${izqGana ? 'gana' : ''}">${izqGana ? '🏆 ' : ''}${escapar(r.nomIzq)} ${r.izq}</span>
+            —
+            <span class="${derGana ? 'gana' : ''}">${r.der} ${escapar(r.nomDer)}${derGana ? ' 🏆' : ''}</span>
+          </div>
+        </div>
+        <button class="borrar" data-idx="${i}">Borrar</button>
+      `;
+      cont.appendChild(fila);
+    });
+    cont.querySelectorAll('.borrar').forEach(b => {
+      b.addEventListener('click', () => {
+        const idx = Number(b.dataset.idx);
+        const arr = leerResultados();
+        arr.splice(idx, 1);
+        escribirResultados(arr);
+        pintarResultados();
+      });
+    });
+  }
+
+  function escapar(s) {
+    return String(s).replace(/[&<>"']/g, c => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+    }[c]));
+  }
+
+  function abrirResultados() {
+    pintarResultados();
+    $('modalResultados').classList.add('abierto');
+  }
+  function cerrarResultados() {
+    $('modalResultados').classList.remove('abierto');
+  }
+
   // Eventos: tocar el panel suma punto, salvo el nombre o las flechas.
   function tocarPanel(lado) {
     return e => {
-      if (e.target.classList.contains('nombre')) return;
+      if (e.target.closest('.nombre-wrap')) return;
       if (e.target.closest('.flechas')) return;
       sumar(lado);
     };
   }
   $('eqIzq').addEventListener('click', tocarPanel('izq'));
   $('eqDer').addEventListener('click', tocarPanel('der'));
+
+  // Editar nombre: el input está readonly por defecto para no interferir
+  // con el toque del panel. El lápiz lo desbloquea para escribir.
+  document.querySelectorAll('.edit-nombre').forEach(b => {
+    b.addEventListener('click', e => {
+      e.stopPropagation();
+      const input = $(b.dataset.target);
+      input.readOnly = false;
+      input.focus();
+      input.select();
+    });
+  });
+  document.querySelectorAll('.nombre').forEach(inp => {
+    inp.addEventListener('click', e => {
+      e.stopPropagation();
+      if (!inp.readOnly) return;
+      inp.readOnly = false;
+      inp.focus();
+      inp.select();
+    });
+    inp.addEventListener('blur', () => { inp.readOnly = true; guardarActual(); });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { e.preventDefault(); inp.blur(); }
+    });
+  });
 
   // Flechas + / − : ajustan el puntaje de su equipo de forma independiente.
   document.querySelectorAll('.flechas button').forEach(b => {
@@ -279,8 +576,14 @@
 
   $('btnCambio').addEventListener('click', cambio);
   $('btnDeshacer').addEventListener('click', deshacer);
-  $('btnReiniciar').addEventListener('click', reiniciar);
+  $('btnNuevo').addEventListener('click', nuevoPartido);
+  $('btnResultados').addEventListener('click', abrirResultados);
+  $('btnCerrarModal').addEventListener('click', cerrarResultados);
+  $('modalResultados').addEventListener('click', e => {
+    if (e.target === $('modalResultados')) cerrarResultados();
+  });
 
+  cargarActual();
   render();
 </script>
 </body>
