@@ -60,6 +60,7 @@
     cursor: pointer;
   }
   .topbar button:active { background: #1f2937; }
+  .topbar-coin { flex: 0 0 auto; display: flex; align-items: center; padding: 0 12px; }
 
   /* --- Marcador --- */
   .marcador {
@@ -325,11 +326,11 @@
     </script>
 </head>
 <body>
-  <closer-click-support floating href="https://ko-fi.com/seyacat"></closer-click-support>
 
   <div class="topbar">
     <button id="btnResultados">📋 Resultados</button>
     <button id="btnInstalar" style="display:none">⬇ Instalar</button>
+    <closer-click-support class="topbar-coin" href="https://ko-fi.com/seyacat"></closer-click-support>
   </div>
 
   <div class="marcador">
