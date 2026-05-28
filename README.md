@@ -1,6 +1,6 @@
 # Contador Ecuavóley
 
-Marcador para partidos de ecuavóley: dos paneles táctiles, indicador de saque, deshacer, cambio y reinicio. Gana el primero en llegar a 15. Parte del ecosistema [Closer Click](https://seyacat.github.io/closerclick/).
+Marcador para partidos de ecuavóley: dos paneles táctiles, indicador de saque, deshacer, cambio y reinicio. Gana el primero en llegar a 15. Parte del ecosistema [Closer Click](https://closerclick.github.io/closerclick/).
 
 ## Filosofía
 
